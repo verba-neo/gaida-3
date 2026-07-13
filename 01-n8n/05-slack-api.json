@@ -1,0 +1,190 @@
+{
+  "name": "05-slack-api",
+  "nodes": [
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "={{ $('slack slash command').item.json.body.channel_id }}",
+          "mode": "id"
+        },
+        "text": "={{ $json.output[0].content[0].text }}",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.5,
+      "position": [
+        0,
+        -192
+      ],
+      "id": "597070e0-8925-447f-b149-eaa16290ed17",
+      "name": "Send a message",
+      "webhookId": "18480e8f-5268-46b0-b972-22710df6f6a3",
+      "credentials": {
+        "slackApi": {
+          "id": "uGwnfjLv98DrANoT",
+          "name": "n8n-cool-bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "slack-command/joke",
+        "options": {
+          "responseData": "✅실행중입니다✅"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -592,
+        -192
+      ],
+      "id": "067d986a-2ef1-4d1a-abb9-12a5c1c014a9",
+      "name": "slack slash command",
+      "webhookId": "afe13a52-451e-4d87-b22c-f6e29a486aa1"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "=주어진 주제로 재미있는 유머를 만들어라."
+            },
+            {
+              "content": "={{ $json.body.text }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        -352,
+        -192
+      ],
+      "id": "30698828-65c7-4e8e-9a82-2c607f22c620",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "gZqz3M68Byo9W7MG",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "trigger": [
+          "app_mention"
+        ],
+        "watchWorkspace": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.slackTrigger",
+      "typeVersion": 1,
+      "position": [
+        -528,
+        48
+      ],
+      "id": "35c17eb6-21e5-4364-bb0e-c219831d96f9",
+      "name": "bot mention",
+      "webhookId": "b061f5b2-b0ec-423f-9293-61f2cb2ec643",
+      "credentials": {
+        "slackApi": {
+          "id": "uGwnfjLv98DrANoT",
+          "name": "n8n-cool-bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "={{ $json.channel }}",
+          "mode": "id"
+        },
+        "text": "와아아아아",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.5,
+      "position": [
+        -192,
+        48
+      ],
+      "id": "a18bb038-6ae5-4a49-8e57-ca26dbabdfbc",
+      "name": "Send a message1",
+      "webhookId": "316ec52f-689c-451a-8879-f0a0d4f06fd0",
+      "credentials": {
+        "slackApi": {
+          "id": "uGwnfjLv98DrANoT",
+          "name": "n8n-cool-bot"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "slack slash command": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "bot mention": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "ad2284f8-b0d0-4116-9e4e-272831d288ef",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "962db6ad3c8fbb23731a09ae218a38ea439314c0bcf11b14f69d028567371888"
+  },
+  "nodeGroups": [],
+  "id": "c6qrq0Qp8VrSIocS",
+  "tags": []
+}

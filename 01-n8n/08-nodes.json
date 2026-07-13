@@ -1,0 +1,458 @@
+{
+  "name": "08-nodes",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        768
+      ],
+      "id": "f515dfe4-b839-4b53-af38-3b0d0fd73116",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "url": "https://www.dhlottery.co.kr/lt645/selectPstLt645Info.do?srchStrLtEpsd=1221&srchEndLtEpsd=1231",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -96,
+        768
+      ],
+      "id": "a29cc748-c6cb-42fd-97f6-af465ed01efe",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data.list",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        128,
+        768
+      ],
+      "id": "5584cfb1-45f8-4532-91a3-37bef47f7bba",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "ltEpsd"
+            },
+            {
+              "fieldToAggregate": "ltRflYmd"
+            },
+            {
+              "fieldToAggregate": "rnk1WnAmt"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        544,
+        768
+      ],
+      "id": "c9f0f08b-6ede-43a5-8710-aa7f2c8e9f45",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "select": "user",
+        "user": {
+          "__rl": true,
+          "value": "U0BF3J30M6K",
+          "mode": "list",
+          "cachedResultName": "verba.it.corp"
+        },
+        "text": "={{ $json.text }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.5,
+      "position": [
+        704,
+        336
+      ],
+      "id": "94fc36d0-7ee7-4c09-90e9-571cba978f18",
+      "name": "Send a message",
+      "webhookId": "0bc5e218-a681-40d3-ae4a-2540eda1119a",
+      "credentials": {
+        "slackApi": {
+          "id": "uGwnfjLv98DrANoT",
+          "name": "n8n-cool-bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -384,
+        336
+      ],
+      "id": "82892022-a1a9-491e-9b37-a41623f14bbf",
+      "name": "When chat message received",
+      "webhookId": "a4b29995-968b-4c1f-a54b-baeb4fbffecf"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "={{ $json.chatInput }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        -176,
+        336
+      ],
+      "id": "7ac5f0db-cd57-45dd-8093-46853d3fa0d0",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "gZqz3M68Byo9W7MG",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "={{ $json.chatInput }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        -176,
+        512
+      ],
+      "id": "adb5e2c9-dec2-4050-8a43-6b42b9c900cb",
+      "name": "Message a model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "gZqz3M68Byo9W7MG",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "={{ $json.chatInput }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        -176,
+        144
+      ],
+      "id": "514f441c-e214-4ea5-9f1a-371e1832205b",
+      "name": "Message a model2",
+      "credentials": {
+        "openAiApi": {
+          "id": "gZqz3M68Byo9W7MG",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        256,
+        320
+      ],
+      "id": "26663d38-3e13-41f1-88c5-cff98d9c06ec",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "output[0].content[0].text"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        464,
+        336
+      ],
+      "id": "81b2f2d1-9e97-4238-9e9c-b94d3f6b917c",
+      "name": "Aggregate1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "023cd0bf-8219-410e-b7a2-a8cf9dc0614e",
+              "leftValue": "={{ $json.rnk1WnAmt }}",
+              "rightValue": 2000000000,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        336,
+        768
+      ],
+      "id": "0176bbfe-4a3f-41b3-ac57-a1ef1002082b",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "select": "user",
+        "user": {
+          "__rl": true,
+          "value": "U0BF3J30M6K",
+          "mode": "list",
+          "cachedResultName": "verba.it.corp"
+        },
+        "text": "={{ $json.ltEpsd }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.5,
+      "position": [
+        752,
+        768
+      ],
+      "id": "8e360746-99f0-4b93-b56c-7e776d2cf2ca",
+      "name": "Send a message1",
+      "webhookId": "348c93b1-9897-40ab-8cf6-66eb9abccd6e",
+      "credentials": {
+        "slackApi": {
+          "id": "uGwnfjLv98DrANoT",
+          "name": "n8n-cool-bot"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        []
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Message a model2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Message a model1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Message a model2": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Aggregate1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate1": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "add0c088-6ea6-4714-836e-72a2a12d848d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "962db6ad3c8fbb23731a09ae218a38ea439314c0bcf11b14f69d028567371888"
+  },
+  "nodeGroups": [],
+  "id": "BEctvobVyVJN500V",
+  "tags": []
+}

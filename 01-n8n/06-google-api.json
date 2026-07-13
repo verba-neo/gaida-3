@@ -1,0 +1,669 @@
+{
+  "name": "06-google-api",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "/slack/vacation",
+        "options": {
+          "responseData": "🔄️처리중입니다"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1200,
+        -48
+      ],
+      "id": "6d022fe4-a216-4eed-a530-3dc9de171c9a",
+      "name": "Webhook",
+      "webhookId": "f5ea4577-0746-407e-b0dd-08759d6e185e",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1cTxd3xxjFi8zLUBUu5VrKxJuFCFeaNjugoSsqex8vaY",
+          "mode": "list",
+          "cachedResultName": "n8n-sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1cTxd3xxjFi8zLUBUu5VrKxJuFCFeaNjugoSsqex8vaY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "시트1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1cTxd3xxjFi8zLUBUu5VrKxJuFCFeaNjugoSsqex8vaY/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "이름": "={{ $('띄어쓰기분절').item.json.words[0] }}",
+            "사유": "={{ $('띄어쓰기분절').item.json.words[1] }}",
+            "시간": "={{ $('띄어쓰기분절').item.json.words[2] }}",
+            "구분": "={{ $json.output[0].content[0].text }}",
+            "id": "={{ $('Aggregate').first().json.id.last() + 1}}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "이름",
+              "displayName": "이름",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "사유",
+              "displayName": "사유",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "시간",
+              "displayName": "시간",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "구분",
+              "displayName": "구분",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        48,
+        -48
+      ],
+      "id": "283e5313-4474-4fae-b421-01b9db6d76dc",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "SRgGZawemU4LEJUR",
+          "name": "Google Sheets"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "select": "user",
+        "user": {
+          "__rl": true,
+          "value": "={{ $('Webhook').item.json.body.user_id }}",
+          "mode": "id"
+        },
+        "text": "=\"{{ $json['이름'] }}\" 님의 휴가가 등록되었습니다.",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.5,
+      "position": [
+        272,
+        -48
+      ],
+      "id": "c2cc799b-5436-4fa6-9b00-6fce2ea1195a",
+      "name": "Send a message",
+      "webhookId": "a9afe2b0-d630-4752-a1b9-6d8b2866c4bb",
+      "credentials": {
+        "slackApi": {
+          "id": "uGwnfjLv98DrANoT",
+          "name": "n8n-cool-bot"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "너는 인사팀에서 휴가 구분해주는 업무를 하는 중이야.\n\n너의 판단대로 사용자의 휴가 신청 사유를 아래 3가지 중에서 구분해야해\n\n공가\n연차\n병가\n\n사유는 필요없고 단어로만 말해"
+            },
+            {
+              "content": "={{ $json.words[1] }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        -304,
+        -48
+      ],
+      "id": "5aaea2ac-891b-44b7-a8d1-5cb475dd8ec1",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "gZqz3M68Byo9W7MG",
+          "name": "OpenAI account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1cTxd3xxjFi8zLUBUu5VrKxJuFCFeaNjugoSsqex8vaY",
+          "mode": "list",
+          "cachedResultName": "n8n-sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1cTxd3xxjFi8zLUBUu5VrKxJuFCFeaNjugoSsqex8vaY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "시트1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1cTxd3xxjFi8zLUBUu5VrKxJuFCFeaNjugoSsqex8vaY/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -976,
+        -48
+      ],
+      "id": "a0ae7893-94e1-43cd-81c2-7ad9f2bcc1a3",
+      "name": "Get row(s) in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "SRgGZawemU4LEJUR",
+          "name": "Google Sheets"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. 입력 데이터에서 텍스트 추출\nconst text = $('Webhook').first().json.body.text;\n\n// 2. 예외 처리\nif (!text) {\n  return [{ json: { words: [] } }];\n}\n\n// 3. 띄어쓰기 기준으로 쪼개어 배열 생성\nconst wordsArray = text.trim().split(/\\s+/);\n\n// 4. 하나의 json 객체 안에 배열을 넣어서 반환 (1개의 결과만 출력됨)\nreturn [{\n  json: {\n    words: wordsArray,\n    totalCount: wordsArray.length // 필요시 총 단어 수도 함께 전달\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -528,
+        -48
+      ],
+      "id": "4346481f-ca7e-4e85-8ed1-e338c50cce66",
+      "name": "띄어쓰기분절",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "id"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -752,
+        -48
+      ],
+      "id": "f4aaaf60-68b6-49a2-9cc3-19774f0ac639",
+      "name": "Aggregate",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "/slack/vacation",
+        "options": {
+          "responseData": "🔄️처리중입니다"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1200,
+        352
+      ],
+      "id": "cd2b3339-678e-466e-a539-6504416210cc",
+      "name": "Webhook1",
+      "webhookId": "f5ea4577-0746-407e-b0dd-08759d6e185e"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1cTxd3xxjFi8zLUBUu5VrKxJuFCFeaNjugoSsqex8vaY",
+          "mode": "list",
+          "cachedResultName": "n8n-sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1cTxd3xxjFi8zLUBUu5VrKxJuFCFeaNjugoSsqex8vaY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "시트1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1cTxd3xxjFi8zLUBUu5VrKxJuFCFeaNjugoSsqex8vaY/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "이름": "={{ $('띄어쓰기분절1').item.json.words[0] }}",
+            "사유": "={{ $('띄어쓰기분절1').item.json.words[1] }}",
+            "시간": "={{ $('띄어쓰기분절1').item.json.words[2] }}",
+            "구분": "={{ $('사유심사').item.json.output[0].content[0].text['구분'] }}",
+            "id": "={{ $now.format('yyyy-MM-dd-HH-mm-ss-SSS') }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "이름",
+              "displayName": "이름",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "사유",
+              "displayName": "사유",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "시간",
+              "displayName": "시간",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "구분",
+              "displayName": "구분",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -160,
+        272
+      ],
+      "id": "0cee6340-2a49-4e94-a7a9-3e8d2f79e387",
+      "name": "Append row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "SRgGZawemU4LEJUR",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. 입력 데이터에서 텍스트 추출\nconst text = $('Webhook1').first().json.body.text;\n\n// 2. 예외 처리\nif (!text) {\n  return [{ json: { words: [] } }];\n}\n\n// 3. 띄어쓰기 기준으로 쪼개어 배열 생성\nconst wordsArray = text.trim().split(/\\s+/);\n\n// 4. 하나의 json 객체 안에 배열을 넣어서 반환 (1개의 결과만 출력됨)\nreturn [{\n  json: {\n    words: wordsArray,\n    totalCount: wordsArray.length // 필요시 총 단어 수도 함께 전달\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1008,
+        352
+      ],
+      "id": "d21532a6-e1d4-4be8-8a55-3acf21709c8d",
+      "name": "띄어쓰기분절1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "d55acb48-e8ee-43f1-9700-c204529ed715",
+              "leftValue": "={{ $json.output[0].content[0].text['승인'] }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -464,
+        352
+      ],
+      "id": "a242990d-2408-4ec9-b252-a61a6bc83c83",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "select": "user",
+        "user": {
+          "__rl": true,
+          "value": "={{ $('Webhook1').item.json.body.user_id }}",
+          "mode": "id"
+        },
+        "text": "=\"{{ $json['이름'] }}\" 님의 휴가가 등록되었습니다.",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.5,
+      "position": [
+        64,
+        272
+      ],
+      "id": "1a39608c-fb6f-481d-a03b-e7fefca63128",
+      "name": "승인 메세지",
+      "webhookId": "a9afe2b0-d630-4752-a1b9-6d8b2866c4bb",
+      "credentials": {
+        "slackApi": {
+          "id": "uGwnfjLv98DrANoT",
+          "name": "n8n-cool-bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "user",
+        "user": {
+          "__rl": true,
+          "value": "={{ $('Webhook1').item.json.body.user_id }}",
+          "mode": "id"
+        },
+        "text": "=\"{{ $('띄어쓰기분절1').item.json.words[0] }}\"님의 휴가가 반려되었습니다.",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.5,
+      "position": [
+        -160,
+        464
+      ],
+      "id": "26e58697-816c-437a-9d44-8ebc2339d7fc",
+      "name": "반려 메세지",
+      "webhookId": "a9afe2b0-d630-4752-a1b9-6d8b2866c4bb",
+      "credentials": {
+        "slackApi": {
+          "id": "uGwnfjLv98DrANoT",
+          "name": "n8n-cool-bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "사용자의 휴가 신청 사유를 분석하여 지정된 JSON 스키마 형식으로만 답변하세요.휴가 사유가 사회적으로 용인되지 않는 경우(예: 술자리, 늦잠, 개인 유흥 등)에는 무조건 \"승인\"을 false로 처리하세요. 이 경우 \"구분\" 필드는 제외합니다.정상적인 사유인 경우 \"승인\"을 true로 처리하고, 사유에 따라 \"구분\" 필드에 [공가, 연차, 병가] 중 단 하나만 선택하여 단어로 입력하세요. 다른 설명은 일절 금지합니다."
+            },
+            {
+              "content": "={{ $json.words[1] }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "textFormat": {
+            "textOptions": {
+              "type": "json_schema",
+              "schema": "{\n  \"$schema\": \"http://json-schema.org\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"승인\": {\n      \"type\": \"boolean\",\n      \"description\": \"휴가 사유가 사회적으로 용인되면 true, 술자리나 늦잠 등 용인되지 않는 사유면 false\"\n    },\n    \"구분\": {\n      \"type\": \"string\",\n      \"enum\": [\"공가\", \"연차\", \"병가\", \"반려\"],\n      \"description\": \"휴가의 종류. '승인'이 false인 경우 이 필드는 '반려' 처리.\"\n    }\n  },\n  \"required\": [\"승인\", \"구분\"],\n  \"additionalProperties\": false\n}"
+            }
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        -800,
+        352
+      ],
+      "id": "3f6e4e3c-5369-4f6e-aaaf-d46537fccbd1",
+      "name": "사유심사",
+      "credentials": {
+        "openAiApi": {
+          "id": "gZqz3M68Byo9W7MG",
+          "name": "OpenAI account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet1": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "띄어쓰기분절": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "띄어쓰기분절",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook1": {
+      "main": [
+        [
+          {
+            "node": "띄어쓰기분절1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet1": {
+      "main": [
+        [
+          {
+            "node": "승인 메세지",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "띄어쓰기분절1": {
+      "main": [
+        [
+          {
+            "node": "사유심사",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "반려 메세지",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "사유심사": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "e636923b-c6e4-43a9-9a15-994c6d49a59c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "962db6ad3c8fbb23731a09ae218a38ea439314c0bcf11b14f69d028567371888"
+  },
+  "nodeGroups": [],
+  "id": "HiFBy1oQE14DdioS",
+  "tags": []
+}

@@ -1,0 +1,1092 @@
+{
+  "name": "lotto-agent",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "# Lotto Agent\n1. 사용자 채팅에 따라 답변을 함\n2. 가장 마지막 회차 정보를 가져 오는걸로 시작\n3. 업무기획 agent 는 답변을 만드는게 아님. -> 지금 주어진 질문이 답변 가능한지 결정, 회차정보 추출\n4. 필요한 회차 정보를 모두 분리하고\n5. 현재 우리 Data Table에 있는지 확인하고\n6. 없으면 API 에서 가져와서 테이블에 저장\n7. 그리고 테이블에서 가져온 정보를 바탕으로 답변 생성\n",
+        "height": 304,
+        "width": 368
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -624,
+        -352
+      ],
+      "typeVersion": 1,
+      "id": "28ccd554-8609-46c2-9327-ffd9e7cb7c35",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "url": "https://www.dhlottery.co.kr/lt645/selectPstLt645Info.do",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -416,
+        -32
+      ],
+      "id": "fdfd22ad-ddab-4f9e-afbf-ad1c6db0e65b",
+      "name": "최신회차정보",
+      "notesInFlow": false,
+      "notes": "추가 query parameter 가 없을 경우 (시작회차/종료회차 정보), 반드시 최신 추첨 정보를 가져옴\n"
+    },
+    {
+      "parameters": {
+        "availableInChat": true,
+        "agentIcon": {
+          "type": "emoji",
+          "value": "🎱"
+        },
+        "agentName": "로또",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -592,
+        -32
+      ],
+      "id": "9004380c-747b-4881-9b4c-27f993b0f8f0",
+      "name": "chat",
+      "webhookId": "19fc687f-8217-40db-a371-16eb7234aa3a"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "1ed7e83e-91b9-47ba-b761-5715672daf8b",
+              "leftValue": "={{ $json.output.is_available }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        128,
+        -32
+      ],
+      "id": "530295a2-1699-467f-a481-a55868ecf5cd",
+      "name": "답변가능여부"
+    },
+    {
+      "parameters": {
+        "content": "Data Table에 필요한 정보가 모두 있는지",
+        "height": 320,
+        "width": 768
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        304,
+        -128
+      ],
+      "typeVersion": 1,
+      "id": "3ee27edd-a848-478d-91ee-bb03ccfeef05",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "output.rounds",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        368,
+        -48
+      ],
+      "id": "5a4ff931-9b08-4828-9c6a-2cb12ceec2a0",
+      "name": "회차정보쪼개기"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "pNowyk88DOsWFZMA",
+          "mode": "list",
+          "cachedResultName": "lotto",
+          "cachedResultUrl": "/projects/sevVO5DQ78RtPc4x/datatables/pNowyk88DOsWFZMA"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "draw_round",
+              "keyValue": "={{ $json['output.rounds'] }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        544,
+        -48
+      ],
+      "id": "62d1f0d9-c69d-48a2-83f6-79a74bbb724c",
+      "name": "db에있는지확인",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const arr1 = $('회차정보쪼개기').all().map(item => item.json['output.rounds'])\nconst arr2 = $input.all().map(item => item.json.draw_round)\nconst missing = arr1.filter(n => !new Set(arr2).has(n));\n\nconst result = missing.map(n => { return {round: n}})\nif (result.length) {\n  return { missing_count:result.length, result}  \n} else {\n  return { missing_count: result.length}\n}\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        -48
+      ],
+      "id": "e5d1e3a7-bbcd-4e1e-a6c5-cb2db8ae36c5",
+      "name": "db에없는회차만거르기"
+    },
+    {
+      "parameters": {
+        "content": "로또 데이터를 웹에서 가저와서 저장하는 플로우",
+        "height": 368,
+        "width": 656
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -432,
+        768
+      ],
+      "typeVersion": 1,
+      "id": "6a1c0b34-8729-49a8-99ad-8ec28a70cce5",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "url": "https://www.dhlottery.co.kr/lt645/selectPstLt645Info.do",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "srchStrLtEpsd",
+              "value": "1201"
+            },
+            {
+              "name": "srchEndLtEpsd",
+              "value": "1210"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -368,
+        896
+      ],
+      "id": "a2a94fd9-e038-463b-be38-24fccbcc31a3",
+      "name": "회차정보가져오기"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "pNowyk88DOsWFZMA",
+          "mode": "list",
+          "cachedResultName": "lotto",
+          "cachedResultUrl": "/projects/sevVO5DQ78RtPc4x/datatables/pNowyk88DOsWFZMA"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "draw_round": "={{ $json.ltEpsd }}",
+            "b1": "={{ $json.tm1WnNo }}",
+            "b2": "={{ $json.tm2WnNo }}",
+            "b3": "={{ $json.tm3WnNo }}",
+            "b4": "={{ $json.tm4WnNo }}",
+            "b6": "={{ $json.tm6WnNo }}",
+            "b5": "={{ $json.tm5WnNo }}",
+            "bonus": "={{ $json.bnsWnNo }}",
+            "first_amount": "={{ $json.rnk1WnAmt }}",
+            "draw_date": "={{ $json.ltRflYmd }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "draw_round",
+              "displayName": "draw_round",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "b1",
+              "displayName": "b1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "b2",
+              "displayName": "b2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "b3",
+              "displayName": "b3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "b4",
+              "displayName": "b4",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "b6",
+              "displayName": "b6",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "b5",
+              "displayName": "b5",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "bonus",
+              "displayName": "bonus",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "draw_date",
+              "displayName": "draw_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "first_amount",
+              "displayName": "first_amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        32,
+        896
+      ],
+      "id": "c4c2ba1e-73b1-4785-8886-693865ab83ae",
+      "name": "Insert row"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data.list",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        896
+      ],
+      "id": "3ffeeb2e-89e1-4616-a918-ec6d1da98702",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ae157217-2d72-403a-9b1c-553eb66f740f",
+              "leftValue": "={{ $json.missing_count }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        896,
+        -48
+      ],
+      "id": "d1c7025c-0094-4374-91cc-5496b767809e",
+      "name": "정보가다있으면"
+    },
+    {
+      "parameters": {
+        "url": "https://www.dhlottery.co.kr/lt645/selectPstLt645Info.do",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "srchStrLtEpsd",
+              "value": "={{ $json.result.round }}"
+            },
+            {
+              "name": "srchEndLtEpsd",
+              "value": "={{ $json.result.round }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        544,
+        320
+      ],
+      "id": "8bdd9387-0c71-4f93-8176-367e4a92be0a",
+      "name": "회차정보가져오기1"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "result",
+        "include": "",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        384,
+        320
+      ],
+      "id": "e5458e18-e620-465a-b587-4a79dd2ba122",
+      "name": "회차나누기"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "pNowyk88DOsWFZMA",
+          "mode": "list",
+          "cachedResultName": "lotto",
+          "cachedResultUrl": "/projects/sevVO5DQ78RtPc4x/datatables/pNowyk88DOsWFZMA"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "draw_round": "={{ $json.data.list[0].ltEpsd }}",
+            "b1": "={{ $json.data.list[0].tm1WnNo }}",
+            "b2": "={{ $json.data.list[0].tm2WnNo }}",
+            "b3": "={{ $json.data.list[0].tm3WnNo }}",
+            "b4": "={{ $json.data.list[0].tm4WnNo }}",
+            "b6": "={{ $json.data.list[0].tm5WnNo }}",
+            "b5": "={{ $json.data.list[0].tm6WnNo }}",
+            "bonus": "={{ $json.data.list[0].bnsWnNo }}",
+            "first_amount": "={{ $json.data.list[0].rnk1WnAmt }}",
+            "draw_date": "={{ $json.data.list[0].ltRflYmd }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "draw_round",
+              "displayName": "draw_round",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "b1",
+              "displayName": "b1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "b2",
+              "displayName": "b2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "b3",
+              "displayName": "b3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "b4",
+              "displayName": "b4",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "b6",
+              "displayName": "b6",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "b5",
+              "displayName": "b5",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "bonus",
+              "displayName": "bonus",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "draw_date",
+              "displayName": "draw_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "first_amount",
+              "displayName": "first_amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        704,
+        320
+      ],
+      "id": "eb13947f-586f-4d15-aeea-473115ee0914",
+      "name": "데이터추가"
+    },
+    {
+      "parameters": {
+        "content": "데이터가 없는경우 데이터 수집 -> 추가 로직\n",
+        "height": 240,
+        "width": 480
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        352,
+        256
+      ],
+      "typeVersion": 1,
+      "id": "694c0abf-8e3f-4444-a971-896457da7857",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bf6a6e12-685d-4b96-b9f5-1462c65c551e",
+              "name": "output.rounds",
+              "value": "={{ $('업무기획').item.json.output.rounds }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1216,
+        144
+      ],
+      "id": "19ca3d96-1340-49b0-b1e3-2ef43c12ae2e",
+      "name": "필요한정보_다시불러오기"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "output.rounds",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1408,
+        144
+      ],
+      "id": "920fff7f-c6ac-426d-a6de-76ff0c06ad45",
+      "name": "회차_쪼개기"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "pNowyk88DOsWFZMA",
+          "mode": "list",
+          "cachedResultName": "lotto",
+          "cachedResultUrl": "/projects/sevVO5DQ78RtPc4x/datatables/pNowyk88DOsWFZMA"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "draw_round",
+              "keyValue": "={{ $json['output.rounds'] }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1584,
+        144
+      ],
+      "id": "941c8184-37ab-4069-aa9a-d435fa6b31ef",
+      "name": "DB정보가져오기"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        1776,
+        144
+      ],
+      "id": "0e46c74e-59c9-43f5-9772-84c2ce82a9db",
+      "name": "정보합치기"
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        880,
+        320
+      ],
+      "id": "fc431f86-705e-4a52-a519-217c601c0fad",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "content": "item 갯수 줄이기 용\n",
+        "height": 240,
+        "width": 166
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        848,
+        256
+      ],
+      "typeVersion": 1,
+      "id": "d86045a0-6701-4069-8f38-0c84945009db",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a43cf06b-3b4f-40c9-b0bb-2f2a28fbda6c",
+              "name": "output",
+              "value": "={{ $json.output[0].content[0].text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2288,
+        144
+      ],
+      "id": "36f231d0-1a4d-44fa-b645-d0bfc99fc7df",
+      "name": "채팅UI에서보이도록"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=사용자 질문: {{ $('chat').item.json.chatInput }}\n\n참고 자료: {{ JSON.stringify($json.data) }}\n\n"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        1968,
+        144
+      ],
+      "id": "133c3326-f82f-43fe-b0b8-343596eead80",
+      "name": "최종답변생성",
+      "credentials": {
+        "openAiApi": {
+          "id": "gZqz3M68Byo9W7MG",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=사용자 질문:\n{{ $('chat').item.json.chatInput }}\n\n오늘 날짜: {{ $now.format('yyyyMMdd ccc') }}\n\n마지막 로또 추첨일: {{ $json.data.list[0].ltRflYmd }} Sat\n마지막 로또 추첨 회차:{{ $json.data.list[0].ltEpsd }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "너는 로또 관련 질문에 답변하기 위한 정보를 정리하는 답변 전 기획자야..\n\n오늘 날짜, 최근 추첨 회차, 최근 추첨 날짜를 활용해서 \n1. 답변을 할 수 있는지\n2. 답변에 필요한 회차 정보는 무엇인지 알아내야해.\n\n저번주, 저번, 가장 최근은 모두 다 마지막 추첨을 의미함.\n\n사용자가 기간을 말하면, 기간에 대응하는 적절한 회차를 찾아야해.\n\n너가 넘겨준 정보를 바탕으로 검색할 데이터 테이블에는 다음과 같은 내용이 들어있어\n\ndraw_round: number  // 회차\nb1~b6: number  // 로또 숫자 6개\nbonus: number  // 로또 보너스 숫자\ndraw_date: datetime  // 추첨일자\nfirst_amount: number  // 1등 당첨금액\n\n이 정보들로 질문에 답을 할 수 있는지,\n있다면 필요한 회차정보는 몇회차인지 잘 계산해서 알려줘\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -192,
+        -32
+      ],
+      "id": "4363b0d3-1975-45cb-8bfd-85b5ec1cb203",
+      "name": "업무기획"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -336,
+        176
+      ],
+      "id": "e8bdaf21-5028-4924-8776-27853d66d06a",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "gZqz3M68Byo9W7MG",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('chat').item.json.sessionId }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        -192,
+        176
+      ],
+      "id": "72df07fb-d5a1-446c-81dc-b71e0ae4fd50",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"title\": \"LottoAgentStructuredOutput\",\n  \"type\": \"object\",\n  \"additionalProperties\": false,\n  \"required\": [\"is_available\", \"rounds\"],\n  \"properties\": {\n    \"is_available\": {\n      \"type\": \"boolean\",\n      \"description\": \"사용자의 질문이 데이터 테이블 기반으로 답변 가능한지 여부\"\n    },\n    \"rounds\": {\n      \"type\": \"array\",\n      \"description\": \"필요한 로또 추첨 회차 목록(정수 배열). 답변이 불가능하면 빈 배열([])로 응답.\",\n      \"items\": {\n        \"type\": \"integer\"\n      },\n      \"uniqueItems\": true\n    }\n  }\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -32,
+        176
+      ],
+      "id": "7ad82f2b-51cf-499c-9792-4ee85ffb2819",
+      "name": "Structured Output Parser"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "최신회차정보": {
+      "main": [
+        [
+          {
+            "node": "업무기획",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "chat": {
+      "main": [
+        [
+          {
+            "node": "최신회차정보",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "답변가능여부": {
+      "main": [
+        [
+          {
+            "node": "회차정보쪼개기",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "회차정보쪼개기": {
+      "main": [
+        [
+          {
+            "node": "db에있는지확인",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "db에있는지확인": {
+      "main": [
+        [
+          {
+            "node": "db에없는회차만거르기",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "회차정보가져오기": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Insert row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "db에없는회차만거르기": {
+      "main": [
+        [
+          {
+            "node": "정보가다있으면",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "회차정보가져오기1": {
+      "main": [
+        [
+          {
+            "node": "데이터추가",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "정보가다있으면": {
+      "main": [
+        [
+          {
+            "node": "필요한정보_다시불러오기",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "회차나누기",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "회차나누기": {
+      "main": [
+        [
+          {
+            "node": "회차정보가져오기1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "데이터추가": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "필요한정보_다시불러오기": {
+      "main": [
+        [
+          {
+            "node": "회차_쪼개기",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "회차_쪼개기": {
+      "main": [
+        [
+          {
+            "node": "DB정보가져오기",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DB정보가져오기": {
+      "main": [
+        [
+          {
+            "node": "정보합치기",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "정보합치기": {
+      "main": [
+        [
+          {
+            "node": "최종답변생성",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "필요한정보_다시불러오기",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "최종답변생성": {
+      "main": [
+        [
+          {
+            "node": "채팅UI에서보이도록",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "업무기획": {
+      "main": [
+        [
+          {
+            "node": "답변가능여부",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "업무기획",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "업무기획",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "업무기획",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "52b607d0-5956-4ae9-8f40-515cd606334f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "962db6ad3c8fbb23731a09ae218a38ea439314c0bcf11b14f69d028567371888"
+  },
+  "nodeGroups": [],
+  "id": "0che6bvoN25Rjcj2",
+  "tags": []
+}
