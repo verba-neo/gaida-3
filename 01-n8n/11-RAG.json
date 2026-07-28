@@ -1,0 +1,359 @@
+{
+  "name": "11-RAG",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Upload your data to test RAG",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Upload your file(s)",
+              "fieldType": "file",
+              "acceptFileTypes": ".pdf, .csv, .txt",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        -176,
+        0
+      ],
+      "id": "f7a656ec-83fc-4ed2-a089-57a9def662b7",
+      "name": "Upload your file here",
+      "webhookId": "82848bc4-5ea2-4e5a-8bb6-3c09b94a8c5d"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        400,
+        224
+      ],
+      "id": "6ea78663-cf2f-4f2d-8e68-43047c2afd87",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "gZqz3M68Byo9W7MG",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "### Readme\nLoad your data into a vector database with the 📚 **Load Data** flow, and then use your data as chat context with the 🐕 **Retriever** flow.\n\n**Quick start**\n1. Click on the `Execute Workflow` button to run the 📚 **Load Data** flow.\n2. Click on `Open Chat` button to run the 🐕 **Retriever** flow. Then ask a question about content from your document(s)\n\n\nFor more info, check [our docs on RAG in n8n](https://docs.n8n.io/advanced-ai/rag-in-n8n/).",
+        "height": 412,
+        "width": 472,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -704,
+        -96
+      ],
+      "typeVersion": 1,
+      "id": "0d07742b-0b36-4c2e-990c-266cbe6e2d4d",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "### 📚 Load Data Flow",
+        "height": 460,
+        "width": 700,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -224,
+        -96
+      ],
+      "typeVersion": 1,
+      "id": "d19d04f3-5231-4e47-bed7-9f24a4a8f582",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "memoryKey": {
+          "__rl": true,
+          "value": "sokdam",
+          "mode": "list"
+        },
+        "clearStore": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory",
+      "typeVersion": 1.2,
+      "position": [
+        32,
+        0
+      ],
+      "id": "bf50a11f-ca6a-4e04-a6d2-42fee272b260",
+      "name": "Insert Data to Store"
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolName": "knowledge_base",
+        "toolDescription": "Use this knowledge base to answer questions from the user",
+        "memoryKey": {
+          "__rl": true,
+          "value": "sokdam",
+          "mode": "list",
+          "cachedResultName": "sokdam"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory",
+      "typeVersion": 1.2,
+      "position": [
+        976,
+        224
+      ],
+      "id": "09c0db62-5413-440e-8c13-fb6bb66d9b6a",
+      "name": "Query Data Tool"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "RAG를 통해서 사용자의 질문에 답을 해야해.\n검색 결과를 무조건 다 사용해야 하는게 아니고, 결과가 정확하지 않으면\n몇번에 걸쳐서 다시 검색을 진행해 보도록 해."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ],
+      "id": "579aed76-9644-42d1-ac13-7369059ff1c2",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        672,
+        0
+      ],
+      "id": "9c30de61-935a-471f-ae88-ec5f67beeefc",
+      "name": "When chat message received",
+      "webhookId": "4091fa09-fb9a-4039-9411-7104d213f601"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        736,
+        144
+      ],
+      "id": "b5aa8942-9cd5-4c2f-bd77-7a0ceb921bac",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "gZqz3M68Byo9W7MG",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "### 🐕 2. Retriever Flow",
+        "height": 460,
+        "width": 680,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        560,
+        -96
+      ],
+      "typeVersion": 1,
+      "id": "28bc73a1-e64a-47bf-ac1c-ffe644894ea5",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "### Embeddings\n\nThe Insert and Retrieve operation use the same embedding node.\n\nThis is to ensure that they are using the **exact same embeddings and settings**.\n\nDifferent embeddings might not work at all, or have unintended consequences.\n",
+        "height": 352,
+        "width": 320,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1024,
+        384
+      ],
+      "typeVersion": 1,
+      "id": "0cf8c647-418c-4d1a-8952-766145afca72",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "textSplittingMode": "custom",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        -80,
+        192
+      ],
+      "id": "94aecac0-03f9-4915-932b-d14a2576607b",
+      "name": "load-split"
+    },
+    {
+      "parameters": {
+        "mode": "load",
+        "memoryKey": {
+          "__rl": true,
+          "value": "sokdam",
+          "mode": "list",
+          "cachedResultName": "sokdam"
+        },
+        "prompt": "'호랑이'를 포함한 속담"
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory",
+      "typeVersion": 1.3,
+      "position": [
+        160,
+        384
+      ],
+      "id": "ece5ef3e-5caf-40e0-9ac8-6d77b74d0cde",
+      "name": "vectorstore검색"
+    },
+    {
+      "parameters": {
+        "chunkSize": 150,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        -176,
+        320
+      ],
+      "id": "a2f722b3-8018-4305-baf4-90b1ede98f6e",
+      "name": "Recursive Character Text Splitter"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Upload your file here": {
+      "main": [
+        [
+          {
+            "node": "Insert Data to Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Insert Data to Store",
+            "type": "ai_embedding",
+            "index": 0
+          },
+          {
+            "node": "Query Data Tool",
+            "type": "ai_embedding",
+            "index": 0
+          },
+          {
+            "node": "vectorstore검색",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Data Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "load-split": {
+      "ai_document": [
+        [
+          {
+            "node": "Insert Data to Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "load-split",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "c0f8c1b4-fd69-44ba-af5a-d718bb123b92",
+  "meta": {
+    "templateId": "rag-starter-template",
+    "instanceId": "962db6ad3c8fbb23731a09ae218a38ea439314c0bcf11b14f69d028567371888"
+  },
+  "nodeGroups": [],
+  "id": "euqr02phIqrOs6Nn",
+  "tags": []
+}
