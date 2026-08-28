@@ -1,5 +1,6 @@
 # app.py
 from flask import Flask, render_template, request
+from utils import extract_naver_news_content, make_gpt_comment
 
 # 서버 인스턴스 생성
 app = Flask(__name__)
@@ -18,18 +19,16 @@ def output_page():
     # 2. 링크를 분리한 후에
     urls = urls.split('\n')
     urls = list(map(lambda url: url.strip(), urls))
-    
-    # 3. 뉴스 기사를 가져와서 내용만 추출 하고
 
-    # 4. GPT에게 넘겨서 댓글을 만들어 달라고 하고
+    results = []
+    for url in urls:
+        # 3. 각 기사 URL을 통해, 기사 본문만 추출
+        content = extract_naver_news_content(url)
+        # 4. GPT에게 넘겨서 댓글을 만들어 달라고 하고
+        comment = make_gpt_comment(content, '긍정')
+        results.append(comment)
 
     # 5. out.html 에 비벼서 보여준다
-    results = [
-        '와우 좋아요',
-        '엄청난 기사군요',
-        '우우 별로야'
-    ]
-
     return render_template('out.html', results=results)
 
 
