@@ -16,6 +16,7 @@ dependencies = [
     "langchain-community>=0.4.2",
     "langchain-core>=1.6.1",
     "langchain-openai>=1.6.0",
+    "langgraph>=1.2.11",
     "matplotlib>=3.11.1",
     "openai>=3.5.0",
     "pandas>=3.0.5",
