@@ -19,6 +19,7 @@ dependencies = [
     "langchain-tavily>=0.2.18",
     "langgraph>=1.2.11",
     "langgraph-checkpoint-postgres>=3.1.2",
+    "langgraph-cli[inmem]>=0.4.31",
     "matplotlib>=3.11.1",
     "openai>=3.5.0",
     "pandas>=3.0.5",
