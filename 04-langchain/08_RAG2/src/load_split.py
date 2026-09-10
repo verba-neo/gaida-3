@@ -212,6 +212,7 @@ def process_llamaparse_markdown(markdown_text: str, source_name: str) -> list[Do
     return table_docs + diagram_docs + text_docs
 
 
+# 위의 함수들이 잘 동작하는지 테스트하는 코드
 if __name__ == "__main__":
     file_path = Path(__file__).parent / "parsed_data" / "output.md"
     with open(file_path, encoding="utf-8") as f:
