@@ -1,18 +1,8 @@
 """
 청킹 -> 하이브리드(Dense + BM25) 저장/로드
-============================================
-
-LangChain 1.0+ 기준 import 경로 (langchain.retrievers는 1.0에서 제거됨):
-- EnsembleRetriever: langchain_classic.retrievers (레거시 패키지로 이동)
-- BM25Retriever: langchain_community.retrievers (변경 없음)
-- Chroma: langchain_chroma (변경 없음)
-
-BM25는 자체 영속화(persist) 기능이 없으므로, 청크 Document 리스트를
-pickle로 저장해뒀다가 로드 시점에 BM25 인덱스를 재구성한다.
-(BM25 인덱싱은 임베딩 API 호출이 없어 재구성 비용이 매우 낮음)
 
 설치:
-    pip install langchain-classic langchain-community langchain-chroma langchain-openai rank_bm25 kiwipiepy
+    uv add langchain-classic langchain-community langchain-chroma langchain-openai rank_bm25 kiwipiepy
 
 환경변수:
     OPENAI_API_KEY 필요 (Dense 임베딩용)
