@@ -28,7 +28,14 @@ from langchain_community.retrievers import BM25Retriever
 from langchain_core.documents import Document
 from langchain_openai import OpenAIEmbeddings
 
-from load_split import process_llamaparse_markdown
+try:
+    from src.load_split import process_llamaparse_markdown
+except ModuleNotFoundError:
+    from load_split import process_llamaparse_markdown
+
+BASE_DIR = Path(__file__).resolve().parent
+DEFAULT_CHROMA_DIR = BASE_DIR / "chroma_db"
+DEFAULT_BM25_PATH = BASE_DIR / "bm25_docs.pkl"
 
 try:
     from kiwipiepy import Kiwi
@@ -50,36 +57,49 @@ def korean_tokenizer(text: str) -> list[str]:
     return [
         token.form
         for token in _kiwi.tokenize(text)
-        if token.tag.startswith(("NN", "VV", "VA", "SL", "SN"))
+        if token.tag in ("NNG", "NNP", "VV", "VA", "SL", "SN")
     ]
 
 
 # --------------------------------------------------------------------------
-# 1. 청킹 -> 하이브리드 저장
+# 1. 쪼개기(load_split 이 담당) -> 하이브리드 저장
 # --------------------------------------------------------------------------
 
 
 def build_and_save_hybrid_store(
-    markdown_path: str,
+    markdown_path: str | Path,
     source_name: str,
-    persist_dir: str = "./chroma_db",
-    bm25_docs_path: str = "./bm25_docs.pkl",
+    persist_dir: str | Path = DEFAULT_CHROMA_DIR,
+    bm25_docs_path: str | Path = DEFAULT_BM25_PATH,
 ) -> None:
+    markdown_path = Path(markdown_path)
+    if not markdown_path.is_absolute():
+        markdown_path = (BASE_DIR / markdown_path).resolve()
+
+    persist_dir = Path(persist_dir)
+    if not persist_dir.is_absolute():
+        persist_dir = (BASE_DIR / persist_dir).resolve()
+
+    bm25_docs_path = Path(bm25_docs_path)
+    if not bm25_docs_path.is_absolute():
+        bm25_docs_path = (BASE_DIR / bm25_docs_path).resolve()
+
     with open(markdown_path, encoding="utf-8") as f:
         markdown_text = f.read()
 
     # 1) 기존 청킹 파이프라인 그대로 사용 (표/다이어그램/텍스트 타입별 분리)
     docs: list[Document] = process_llamaparse_markdown(markdown_text, source_name=source_name)
 
-    # 2) Dense: Chroma에 영속화 (persist_directory 지정 시 자동으로 디스크에 저장됨)
+    # 2) Dense: Chroma에 영구저장 (persist_directory 지정 시 자동으로 디스크에 저장됨)
     Chroma.from_documents(
         documents=docs,
-        embedding=OpenAIEmbeddings(),
-        persist_directory=persist_dir,
+        embedding=OpenAIEmbeddings(model='text-embedding-3-small'),
+        persist_directory=str(persist_dir),
     )
 
     # 3) Sparse(BM25)용 원본 청크를 pickle로 저장
     #    -> BM25는 자체 저장 API가 없어서, 로드 시 이 pickle로 인덱스를 재구성함
+    bm25_docs_path.parent.mkdir(parents=True, exist_ok=True)
     with open(bm25_docs_path, "wb") as f:
         pickle.dump(docs, f)
 
@@ -87,35 +107,44 @@ def build_and_save_hybrid_store(
 
 
 # --------------------------------------------------------------------------
-# 2. 저장된 것 로드 -> 하이브리드 리트리버 재구성
+# 2. 저장소(vector, keyword) 로드 -> 하이브리드 검색기로 합체
 # --------------------------------------------------------------------------
 
 
 def load_hybrid_retriever(
-    persist_dir: str = "./chroma_db",
-    bm25_docs_path: str = "./bm25_docs.pkl",
+    persist_dir: str | Path = DEFAULT_CHROMA_DIR,
+    bm25_docs_path: str | Path = DEFAULT_BM25_PATH,
     dense_weight: float = 0.5,
     sparse_weight: float = 0.5,
     dense_k: int = 5,
     sparse_k: int = 5,
 ) -> EnsembleRetriever:
+    persist_dir = Path(persist_dir)
+    if not persist_dir.is_absolute():
+        persist_dir = (BASE_DIR / persist_dir).resolve()
+
+    bm25_docs_path = Path(bm25_docs_path)
+    if not bm25_docs_path.is_absolute():
+        bm25_docs_path = (BASE_DIR / bm25_docs_path).resolve()
+
     # Dense: 디스크에서 그대로 로드 (재임베딩 없음 -> 비용/시간 절약)
     vectorstore = Chroma(
-        persist_directory=persist_dir,
-        embedding_function=OpenAIEmbeddings(),
+        persist_directory=str(persist_dir),
+        embedding_function=OpenAIEmbeddings(model='text-embedding-3-small'),
     )
-    dense_retriever = vectorstore.as_retriever(search_kwargs={"k": dense_k})
+    # 의미론 검색기
+    dense_retriever = vectorstore.as_retriever(search_kwargs={"k": dense_k})  # 검색해 올 문서 수(매개변수)
 
     # Sparse: pickle에서 청크를 불러와 BM25 인덱스 재구성 (API 호출 없어 빠름)
     with open(bm25_docs_path, "rb") as f:
         docs: list[Document] = pickle.load(f)
-
+    # 키워드 검색기
     sparse_retriever = BM25Retriever.from_documents(docs, preprocess_func=korean_tokenizer)
-    sparse_retriever.k = sparse_k
+    sparse_retriever.k = sparse_k  # 검색해 올 문서 수(매개변수)
 
     return EnsembleRetriever(
         retrievers=[sparse_retriever, dense_retriever],
-        weights=[sparse_weight, dense_weight],
+        weights=[sparse_weight, dense_weight],  # 검색기 별 비중 (매개변수)
     )
 
 
@@ -124,18 +153,19 @@ def load_hybrid_retriever(
 # --------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    from 
+    from dotenv import load_dotenv
+    load_dotenv()
 
-    markdown_path = Path(__file__).parent / "parsed_data" / "output.md"
+    markdown_path = BASE_DIR / "parsed_data" / "output.md"
 
     # 최초 1회: 청킹 + 하이브리드 저장
     build_and_save_hybrid_store(
-        markdown_path=str(markdown_path),
+        markdown_path=markdown_path,
         source_name="NIA_2026_trends.pdf",
     )
 
     # 이후: 저장된 것만 로드해서 바로 검색 (재파싱/재임베딩 없음)
-    hybrid_retriever = load_hybrid_retriever()
+    hybrid_retriever = load_hybrid_retriever(dense_k=5, sparse_k=5)
 
     query = "글로벌 AI 반도체 시장 규모 2026년 전망"
     print(f"\n[질문] {query}")
