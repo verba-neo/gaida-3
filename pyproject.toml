@@ -45,6 +45,9 @@ dependencies = [
     "torch>=2.14.0",
     "markdownify>=1.2.3",
     "tavily>=1.1.0",
+    "langsmith[sandbox]>=0.11.2",
+    "slack-sdk>=3.44.1",
+    "langchain-daytona>=0.0.8",
 ]
 
 
