@@ -19,7 +19,6 @@ dependencies = [
     "langchain-tavily>=0.2.18",
     "langgraph>=1.2.11",
     "langgraph-checkpoint-postgres>=3.1.2",
-    "langgraph-cli[inmem]>=0.4.31",
     "matplotlib>=3.11.1",
     "openai>=3.5.0",
     "pandas>=3.0.5",
@@ -48,6 +47,8 @@ dependencies = [
     "langsmith[sandbox]>=0.11.2",
     "slack-sdk>=3.44.1",
     "langchain-daytona>=0.0.8",
+    "fastapi>=0.141.1",
+    "python-telegram-bot>=22.8",
 ]
 
 
@@ -57,3 +58,8 @@ build-backend = "uv_build"
 
 [tool.uv]
 package = false
+
+[tool.uv.workspace]
+members = [
+    "04-langchain/11_eval_webhook",
+]
