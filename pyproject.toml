@@ -49,6 +49,7 @@ dependencies = [
     "langchain-daytona>=0.0.8",
     "fastapi>=0.141.1",
     "python-telegram-bot>=22.8",
+    "openevals>=0.2.0",
 ]
 
 
