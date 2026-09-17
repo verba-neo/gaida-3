@@ -3,4 +3,3 @@ from langchain.agents import create_agent
 agent = create_agent(
     model='openai:gpt-4.1-mini'
 )
-
